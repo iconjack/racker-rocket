@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<head>
+  <META HTTP-EQUIV="Expires" CONTENT="Tue, 01 Jan 1980 1:00:00 GMT">
+  <META HTTP-EQUIV="Pragma" CONTENT="no-cache">  
+  <link rel="shortcut icon" href="favicon.ico"/>
+  <link rel="stylesheet" type="text/css" href="rocket.css"/>
+
+  <script src="misc.js"></script>
+  <script src="requestpool.js"></script>
+  <script src="rpc.js"></script>
+  <script src="actor.js"></script>
+  <script src="stage.js"></script>
+  <script src="rocket.js"></script>
+  <script src="seat.js"></script>
+  <script src="seatservice.js"></script>
+
+  <script>
+
+  var requestpool = new RequestPool(20);   // GLOBAL
+
+  //  main program
+
+  window.onload = function() {
+    var canvas = $('canvas');
+    var context = canvas.getContext('2d');
+
+    //  keep the canvas the same size as the full window
+
+    window.onresize = function() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      update();
+    }
+
+    // get background from css and background image from a file
+
+    var bgimage = new Image();
+    bgimage.src = "nebula.jpg";
+    var bgcolor = getComputedStyle(document.body).getPropertyValue('background-color');
+
+    //  create the stage and the rocket
+
+    var stage = new Stage(context, bgcolor, bgimage);
+
+    var rocket = new Rocket(0, 0, 1.0, 0.0, new SeatService());
+    stage.components.push(rocket);
+
+
+    //  return an oscillator (a periodic function of t)
+
+    function osc(min, max, period, phase) {
+      var dcoffset = (min+max)/2.0;
+      var amplitude = (max-min)/2.0;
+      return function(t) {
+        return dcoffset + amplitude*Math.sin(2*Math.PI*(t/period+phase));
+      };
+    }
+
+    // returns a function of t that:
+    //   returns a given value for t < holdtime
+    
+    function holdthen(value, holdtime, fun) {
+      return function(t) {
+        if (t < holdtime)
+          return value;
+        else
+          return fun(t-holdtime);
+      };
+    }
+
+    //  call update periodically
+
+    var updateperiod = 120;
+
+    setInterval(function() {
+      update();
+    }, updateperiod);
+
+    var triptime = 60000;
+    var t = 0;
+
+    function update() {
+      var w = canvas.width, h = canvas.height;
+      var rocketsize = Math.min(w,h);
+
+      //  update rocket
+
+      t += updateperiod;
+      rocket.x = holdthen(w/2, triptime+1000, osc(0.2*w, 0.8*w, 330000, 0))(t);
+      rocket.y = holdthen(h/2, triptime+18000, osc(0.2*h, 0.8*h, 240000, 0))(t);
+      rocket.angle = holdthen(Math.PI/2, triptime+40000, osc(Math.PI/2-0.1,Math.PI/2+0.1, 23000, 0.5))(t);
+      rocket.scalar = holdthen(rocketsize, triptime+30000, osc(0.2*rocketsize, 1.8*rocketsize, 154000, 0.5))(t);
+
+      var bgwidth = bgimage.width;
+      var bgheight = bgimage.height;
+      var maxoffsetx = (bgwidth-w);
+      var maxoffsety = (bgheight-h);
+
+      stage.bgoffsetx = holdthen(0, triptime+80000, osc(0, maxoffsetx, 240000, -0.25))(t);
+      stage.bgoffsety = holdthen(0, triptime+120000, osc(0, maxoffsety, 800003, -0.25))(t);
+      stage.bgalpha = holdthen(0, triptime+1000, osc(0, 1.0, 260000, -0.25))(t);
+
+      stage.draw();
+
+      //  update the status portion of the top bar
+
+      var requeststats = requestpool.stats();
+      $('requests').innerHTML = requeststats.requests;
+      $('timeouts').innerHTML = requeststats.timeouts;
+    }
+
+    $('clearbutton').addEventListener("click", 
+      function(clickEvent) {
+        rocket.emptySeats(function() {});
+      },
+    false);
+
+    // trigger a resize so the page gets layed out
+    // some browsers call resize on page load, but not all
+    
+    window.onresize();
+  }
+
+  </script>
+</head>
+
+<body>
+  <div id='header'>
+    <span id='available' class='dot'>&nbsp;&#x25CF;</span>
+    <span class='dotlabel'>available&nbsp;&nbsp;&nbsp;</span>
+    <span id='occupied' class='dot'>&#x25CF;</span>
+    <span class='dotlabel'>occupied&nbsp;&nbsp;&nbsp;</span>
+    <span id='pending' class='dot'>&#x25CF;</span>
+    <span class='dotlabel'>pending&nbsp;&nbsp;&nbsp;</span>
+    <span id='unknown' class='dot'>&#x25CF;</span>
+    <span class='dotlabel'>unknown&nbsp;&nbsp;&nbsp;</span>
+    <span id='error' class='dot'>&#x25CF;</span>
+    <span class='dotlabel'>error&nbsp;&nbsp;&nbsp;</span>
+    &nbsp;&nbsp;<img id='clearbutton' src='clear.png' />
+    <span id='status'>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      Requests:
+      <span id='requests'>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      Timeouts:
+      <span id='timeouts'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    </span>  
+    <span id='credits'>
+      <img src='favicon.ico'/>
+       by IJK 
+      <a href="http://twitter.com/iconjack"><img src='twitter.png' /></a>      
+    </span> 
+  </div>
+  <canvas id='canvas'></canvas>
+</body>
+</html>

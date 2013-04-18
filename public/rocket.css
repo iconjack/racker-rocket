@@ -1,0 +1,82 @@
+* {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;      
+}
+
+body {
+  background-color: #1E1E20;
+  color: white;
+}
+
+#canvas {
+  position: fixed; 
+  bottom: 0px; 
+  left: 0px;
+  visibility: visible;
+}
+
+#clearbutton {
+  vertical-align: middle;
+}
+
+#status {
+  font-family: Courier New;
+}
+
+#header {
+  height: 24px;
+  min-width: 2000px;
+  width: 100%;
+  background-color: #9B647B;
+  /* position absolute (or relative) is necessary to place an element on top 
+     of a fixed element using z-index */
+  position: absolute;
+  top: 0px;
+  z-index: 3;
+  font-family: sans-serif;
+}
+
+#credits {
+  position: fixed;
+  right: 10px;
+  font-size: 20px;
+  font-family: Courier New;
+  font-style: italic;
+}
+
+#follow-me {
+  padding: 2px 0px 2px 20px;
+}
+
+.dot {
+  font-size: 24px;
+  vertical-align: middle;
+}
+
+.dotlabel {
+  font-family: sans-serif;
+}
+
+#available {
+  color: #A8B05A;
+}
+
+#occupied {
+  color: #000000;
+}
+
+#pending {
+  color: #E1FF00;
+}
+
+#unknown {
+  color: #026F8C;
+}
+
+#error {
+  color: red;  /* not used */
+}  
